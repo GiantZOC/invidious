@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% from "_card.html" import card with context %}
+
+{% macro section(title, items, note="") %}
+<div class="pure-g">
+    <div class="pure-u-1">
+        <div class="h-box">
+            <h2>{{ title }}</h2>
+            {%- if note %}<p class="video-data">{{ note }}</p>{% endif %}
+        </div>
+    </div>
+</div>
+{%- if items %}
+<div class="pure-g">
+    {%- for item in items %}
+    {{ card(item, watched, show_score=true) }}
+    {%- endfor %}
+</div>
+{%- else %}
+<div class="pure-g">
+    <div class="pure-u-1"><div class="h-box"><p class="video-data">Nothing yet.</p></div></div>
+</div>
+{%- endif %}
+{% endmacro %}
+
+{% block content %}
+<div class="pure-g">
+    <div class="pure-u-1">
+        <div class="h-box">
+            <h2>Discover</h2>
+            <p class="video-data">
+                {{ counts.videos }} videos known, {{ counts.watches }} watched,
+                {{ counts.edges }} related-video edges.
+                {%- if hidden_shorts %} {{ hidden_shorts }} short clips hidden.{% endif %}
+                <a href="/x/settings">Settings</a>
+            </p>
+            {%- if not token_ready %}
+            <p><strong>No API token configured.</strong> Set
+               <code>INVIDIOUS_TOKEN</code> in <code>local/.env</code> and run
+               <code>docker compose up -d sidecar</code> to start collecting.</p>
+            {%- endif %}
+        </div>
+    </div>
+</div>
+
+{{ section("For you", for_you, "Ranked from what you watch and how you rate channels.") }}
+{{ section("Discover", fresh, "Channels you are not subscribed to.") }}
+{{ section("From your subscriptions", from_subs, "Your own channels, re-ranked by channel affinity.") }}
+{% endblock %}

@@ -1,0 +1,154 @@
+name: invidious-local
+
+# Invidious stack for steve-mint, reachable over the tailnet only.
+# Caddy is the only container publishing a host port, bound to 127.0.0.1:3080,
+# so nothing here is reachable from the LAN or the public internet.
+
+services:
+  invidious:
+    image: quay.io/invidious/invidious:latest
+    restart: unless-stopped
+    depends_on:
+      invidious-db:
+        condition: service_healthy
+      companion:
+        condition: service_started
+    environment:
+      INVIDIOUS_CONFIG: |
+        db:
+          dbname: invidious
+          user: invidious
+          password: ${POSTGRES_PASSWORD}
+          host: invidious-db
+          port: 5432
+          check_tables: true
+        check_tables: true
+        domain: ${TS_HOST}
+        external_port: 8444
+        https_only: true
+        hmac_key: ${HMAC_KEY}
+        invidious_companion:
+          - private_url: "http://companion:8282/companion"
+        invidious_companion_key: ${COMPANION_KEY}
+        registration_enabled: ${REGISTRATION_ENABLED}
+        login_enabled: true
+        captcha_enabled: false
+        popular_enabled: false
+        statistics_enabled: false
+        disable_abusable_api: false
+        channel_threads: 2
+        banner: '<a href="/feed/smart">Smart feed</a> &middot; <a href="/feed/discover">Discover</a>'
+        default_user_preferences:
+          default_home: Subscriptions
+          feed_menu: ["Subscriptions", "Smart", "Discover", "Playlists"]
+          local: true
+          watch_history: true
+          related_videos: true
+          continue: true
+          continue_autoplay: true
+    healthcheck:
+      # Static asset served from the image: proves the app is listening without
+      # making a request to YouTube.
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/css/default.css"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp
+
+  companion:
+    image: quay.io/invidious/invidious-companion:latest
+    restart: unless-stopped
+    environment:
+      SERVER_SECRET_KEY: ${COMPANION_KEY}
+      SERVER_BASE_PATH: /companion
+      SERVER_VERIFY_REQUESTS: "true"
+      CACHE_ENABLED: "true"
+      CACHE_DIRECTORY: /var/tmp
+    volumes:
+      - companioncache:/var/tmp
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # /thc is the image's own healthcheck helper; it reads THC_PATH=/healthz
+    # and THC_PORT_NAME=PORT from the image env.
+    healthcheck:
+      test: ["CMD", "/thc", "-version"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  invidious-db:
+    image: docker.io/library/postgres:14
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: invidious
+      POSTGRES_USER: invidious
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgresdata:/var/lib/postgresql/data
+      - ../config/sql:/config/sql:ro
+      - ../docker/init-invidious-db.sh:/docker-entrypoint-initdb.d/init-invidious-db.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U invidious -d invidious"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  sidecar:
+    build: ./sidecar
+    image: invidious-local/sidecar:local
+    restart: unless-stopped
+    depends_on:
+      invidious:
+        condition: service_healthy
+    environment:
+      SIDECAR_DB: /data/sidecar.db
+      INVIDIOUS_URL: http://invidious:3000
+      INVIDIOUS_TOKEN: ${INVIDIOUS_TOKEN}
+      POLL_HISTORY_SECONDS: "300"
+      POLL_FEED_SECONDS: "900"
+      FETCH_MIN_INTERVAL_SECONDS: "5"
+      FETCH_MAX_PER_CYCLE: "20"
+    volumes:
+      - sidecardata:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/x/health',timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  caddy:
+    image: docker.io/library/caddy:2
+    restart: unless-stopped
+    depends_on:
+      invidious:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:3080:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddydata:/data
+      - caddyconfig:/config
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  postgresdata:
+  companioncache:
+  sidecardata:
+  caddydata:
+  caddyconfig:

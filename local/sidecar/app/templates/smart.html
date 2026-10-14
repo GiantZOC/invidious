@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% from "_card.html" import card with context %}
+
+{% block content %}
+<div class="pure-g">
+    <div class="pure-u-1">
+        <div class="h-box">
+            <h2>Smart feed</h2>
+            <p class="video-data">
+                Showing {{ shown }} of {{ total }} subscription videos.
+                {%- if prefs.group %} Group: <strong>{{ prefs.group }}</strong>.{% endif %}
+                {%- if prefs.unseen_only %} Hiding watched.{% endif %}
+                <a href="/x/settings">Adjust</a>
+            </p>
+
+            <div class="sidecar-filters">
+                <form class="pure-form pure-form-inline" method="get" action="/feed/smart">
+                    <select name="group" class="auto-submit">
+                        <option value="">All channels</option>
+                        {%- for name in groups %}
+                        <option value="{{ name }}" {% if prefs.group == name %}selected{% endif %}>{{ name }}</option>
+                        {%- endfor %}
+                    </select>
+                    <select name="sort" class="auto-submit">
+                        <option value="recency" {% if prefs.sort == 'recency' %}selected{% endif %}>Newest first</option>
+                        <option value="weighted" {% if prefs.sort == 'weighted' %}selected{% endif %}>Most-watched channels first</option>
+                    </select>
+                    <noscript><button type="submit" class="pure-button">Apply</button></noscript>
+                    {%- for key, value in request.query_params.multi_items() -%}
+                        {%- if key not in ('group', 'sort') %}
+                        <input type="hidden" name="{{ key }}" value="{{ value }}">
+                        {%- endif %}
+                    {%- endfor -%}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if items %}
+<div class="pure-g">
+    {%- for item in items %}
+    {{ card(item, watched, show_score=false) }}
+    {%- endfor %}
+</div>
+{% else %}
+<div class="pure-g">
+    <div class="pure-u-1">
+        <div class="h-box">
+            <p>No videos match the current filters. The subscription feed is
+               collected every 15 minutes; <a href="/x/health">check the collector</a>
+               if this stays empty.</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

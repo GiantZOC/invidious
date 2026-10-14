@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="pure-g">
+    <div class="pure-u-1">
+        <div class="h-box">
+            <h2>Sidecar settings</h2>
+            {%- if not token_ready %}
+            <p><strong>No API token configured</strong>, so the collector is idle.
+               Create a token at <a href="/token_manager">/token_manager</a>
+               (scopes: feed, subscriptions, history, preferences), put it in
+               <code>local/.env</code> as <code>INVIDIOUS_TOKEN</code>, then
+               <code>docker compose up -d sidecar</code>.</p>
+            {%- endif %}
+        </div>
+    </div>
+</div>
+
+<div class="pure-g">
+    <div class="pure-u-1 pure-u-md-12-24">
+        <div class="h-box">
+            <h3>Smart feed filters</h3>
+            <form class="pure-form pure-form-stacked" method="post" action="/x/settings/prefs">
+                <label><input type="checkbox" name="hide_shorts" {% if prefs.hide_shorts %}checked{% endif %}> Hide Shorts (60s or shorter)</label>
+                <label><input type="checkbox" name="hide_live" {% if prefs.hide_live %}checked{% endif %}> Hide live streams</label>
+                <label><input type="checkbox" name="hide_premieres" {% if prefs.hide_premieres %}checked{% endif %}> Hide scheduled premieres</label>
+                <label><input type="checkbox" name="unseen_only" {% if prefs.unseen_only %}checked{% endif %}> Hide videos already watched</label>
+                <label>Minimum length (seconds)
+                    <input type="number" name="min_len" min="1" value="{{ prefs.min_len or '' }}"></label>
+                <label>Maximum length (seconds)
+                    <input type="number" name="max_len" min="1" value="{{ prefs.max_len or '' }}"></label>
+                <label>Default group
+                    <select name="group">
+                        <option value="">All channels</option>
+                        {%- for name in channels | selectattr("grp") | map(attribute="grp") | unique | sort %}
+                        <option value="{{ name }}" {% if prefs.group == name %}selected{% endif %}>{{ name }}</option>
+                        {%- endfor %}
+                    </select>
+                </label>
+                <label>Default sort
+                    <select name="sort">
+                        <option value="recency" {% if prefs.sort == 'recency' %}selected{% endif %}>Newest first</option>
+                        <option value="weighted" {% if prefs.sort == 'weighted' %}selected{% endif %}>Most-watched channels first</option>
+                    </select>
+                </label>
+                <button type="submit" class="pure-button pure-button-primary">Save filters</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="pure-u-1 pure-u-md-12-24">
+        <div class="h-box">
+            <h3>Title rules</h3>
+            <form class="pure-form pure-form-stacked" method="post" action="/x/settings/rule">
+                <label>Kind
+                    <select name="kind">
+                        <option value="block">Block</option>
+                        <option value="boost">Boost</option>
+                    </select>
+                </label>
+                <label>Match in title (case-insensitive substring)
+                    <input type="text" name="pattern" placeholder="e.g. trailer" required></label>
+                <button type="submit" class="pure-button pure-button-primary">Add rule</button>
+            </form>
+
+            {%- if rules %}
+            <table class="pure-table sidecar-table">
+                <thead><tr><th>Kind</th><th>Pattern</th><th></th></tr></thead>
+                <tbody>
+                {%- for rule in rules %}
+                <tr>
+                    <td>{{ rule.kind }}</td>
+                    <td>{{ rule.pattern }}</td>
+                    <td>
+                        <form class="pure-form" method="post" action="/x/settings/rule/delete">
+                            <input type="hidden" name="rule_id" value="{{ rule.id }}">
+                            <button type="submit" class="pure-button pure-button-secondary low-profile">
+                                <i class="icon ion-ios-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {%- endfor %}
+                </tbody>
+            </table>
+            {%- endif %}
+        </div>
+    </div>
+</div>
+
+<div class="pure-g">
+    <div class="pure-u-1">
+        <div class="h-box">
+            <h3>Channels</h3>
+            <p class="video-data">Weight scales a channel in the weighted sort
+               (0.5 = half as likely, 2 = twice). Group feeds the Smart feed tabs.
+               Muted channels are hidden everywhere.</p>
+        </div>
+    </div>
+</div>
+<div class="pure-g">
+    {%- for channel in channels %}
+    <div class="pure-u-1 pure-u-md-12-24">
+        <div class="h-box sidecar-channel">
+            <h4><a href="/channel/{{ channel.ucid }}">{{ channel.author or channel.ucid }}</a></h4>
+            <form class="pure-form pure-form-aligned" method="post" action="/x/settings/channel">
+                <input type="hidden" name="ucid" value="{{ channel.ucid }}">
+                <fieldset>
+                    <div class="pure-control-group">
+                        <label>Group</label>
+                        <input type="text" name="grp" size="12" value="{{ channel.grp or '' }}">
+                    </div>
+                    <div class="pure-control-group">
+                        <label>Weight</label>
+                        <input type="text" name="weight" size="4"
+                               value="{{ channel.weight if channel.weight is not none else '1.0' }}">
+                    </div>
+                    <div class="pure-control-group">
+                        <label>Min seconds</label>
+                        <input type="text" name="min_len" size="5" value="{{ channel.min_len or '' }}">
+                    </div>
+                    <div class="pure-control-group">
+                        <label>Max seconds</label>
+                        <input type="text" name="max_len" size="5" value="{{ channel.max_len or '' }}">
+                    </div>
+                    <div class="pure-control-group">
+                        <label>Muted</label>
+                        <input type="checkbox" name="muted" {% if channel.muted %}checked{% endif %}>
+                    </div>
+                    <div class="pure-controls">
+                        <button type="submit" class="pure-button pure-button-secondary">Save</button>
+                    </div>
+                </fieldset>
+            </form>
+        </div>
+    </div>
+    {%- endfor %}
+</div>
+
+<div class="pure-g">
+    <div class="pure-u-1">
+        <div class="h-box">
+            <h3>Feed menu</h3>
+            <p class="video-data">Saving Invidious's preferences page rewrites
+               <code>feed_menu</code> from its fixed option list and drops Smart and
+               Discover. This re-posts them.</p>
+            <button type="button" class="pure-button pure-button-primary" id="restore-menu">
+                Restore feed menu ({{ menu | join(", ") }})
+            </button>
+            <span id="restore-menu-note" class="video-data"></span>
+        </div>
+    </div>
+</div>
+{% endblock %}

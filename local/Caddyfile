@@ -1,0 +1,23 @@
+:80 {
+	# Sidecar-owned paths. Everything else is Invidious.
+	handle /feed/smart* {
+		reverse_proxy sidecar:8000
+	}
+
+	handle /feed/discover* {
+		reverse_proxy sidecar:8000
+	}
+
+	handle /x/* {
+		reverse_proxy sidecar:8000
+	}
+
+	handle {
+		reverse_proxy invidious:3000
+	}
+
+	log {
+		output file /data/access.log
+		format console
+	}
+}

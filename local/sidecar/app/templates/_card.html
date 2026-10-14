@@ -1,0 +1,99 @@
+{% macro card(item, watched, show_score=false) -%}
+<div class="pure-u-1 pure-u-md-1-4" data-card="{{ item.video_id }}">
+    <div class="h-box">
+        <div class="thumbnail">
+            <a tabindex="-1" href="/watch?v={{ item.video_id }}">
+                <img loading="lazy" class="thumbnail" src="/vi/{{ item.video_id }}/mqdefault.jpg" alt="">
+                {%- if item.video_id in watched %}
+                <div class="watched-overlay"></div>
+                {%- endif %}
+            </a>
+            <div class="bottom-right-overlay">
+                {%- if item.live_now %}
+                <p class="length" dir="auto"><i class="icon ion-ios-play-circle"></i>&nbsp;LIVE</p>
+                {%- elif item.length_seconds %}
+                <p class="length">{{ format_length(item.length_seconds) }}</p>
+                {%- endif %}
+            </div>
+        </div>
+
+        <div class="video-card-row">
+            <a href="/watch?v={{ item.video_id }}"><p dir="auto">{{ item.title }}</p></a>
+        </div>
+
+        <div class="video-card-row flexible">
+            <div class="flex-left">
+                {%- if item.ucid -%}
+                <a href="/channel/{{ item.ucid }}">
+                    <p class="channel-name" dir="auto">{{ item.author }}</p>
+                </a>
+                {%- else -%}
+                <p class="channel-name" dir="auto">{{ item.author }}</p>
+                {%- endif %}
+            </div>
+        </div>
+
+        <div class="video-card-row flexible">
+            <div class="flex-left">
+                {%- if item.premiere_timestamp and item.premiere_timestamp > now -%}
+                <p class="video-data" dir="auto">Premieres {{ format_age(item.premiere_timestamp) }}</p>
+                {%- else -%}
+                <p class="video-data" dir="auto">Shared {{ format_age(item.published) }}</p>
+                {%- endif %}
+            </div>
+            {%- if item.views -%}
+            <div class="flex-right">
+                <p class="video-data" dir="auto">{{ format_views(item.views) }}</p>
+            </div>
+            {%- endif %}
+        </div>
+
+        {%- if show_score %}
+        <div class="video-card-row flexible sidecar-score">
+            <div class="flex-left">
+                <p class="video-data" title="co {{ '%.2f'|format(item.features.cooccurrence) }} / ch {{ '%.2f'|format(item.features.channel_affinity) }} / new {{ '%.2f'|format(item.features.freshness) }} / novel {{ '%.2f'|format(item.features.novelty) }}">
+                    {{ '%.3f'|format(item.score) }}
+                </p>
+            </div>
+            {%- if item.subscribed -%}
+            <div class="flex-right"><p class="video-data">subscribed</p></div>
+            {%- endif %}
+        </div>
+        {%- endif %}
+
+        <div class="video-card-row flexible sidecar-actions">
+            <div class="flex-left">
+                {%- if item.ucid %}
+                <button type="button" class="pure-button pure-button-secondary low-profile sidecar-action"
+                        title="Like channel" data-action="like"
+                        data-target-type="channel" data-target-id="{{ item.ucid }}">
+                    <i class="icon ion-ios-thumbs-up"></i>
+                </button>
+                {%- endif %}
+                <button type="button" class="pure-button pure-button-secondary low-profile sidecar-action"
+                        title="Not interested in this video" data-action="dismiss"
+                        data-target-type="video" data-target-id="{{ item.video_id }}">
+                    <i class="icon ion-ios-eye-off"></i>
+                </button>
+                <button type="button" class="pure-button pure-button-secondary low-profile sidecar-action"
+                        title="Mark watched" data-action="watched"
+                        data-target-type="video" data-target-id="{{ item.video_id }}">
+                    <i class="icon ion-ios-checkmark"></i>
+                </button>
+                {%- if item.ucid %}
+                <button type="button" class="pure-button pure-button-secondary low-profile sidecar-action"
+                        title="Block channel" data-action="block"
+                        data-target-type="channel" data-target-id="{{ item.ucid }}">
+                    <i class="icon ion-ios-close-circle"></i>
+                </button>
+                <button type="button" class="pure-button pure-button-secondary low-profile sidecar-action"
+                        title="Dislike channel" data-action="dislike"
+                        data-target-type="channel" data-target-id="{{ item.ucid }}">
+                    <i class="icon ion-ios-thumbs-down"></i>
+                </button>
+                {%- endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{%- endmacro %}

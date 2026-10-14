@@ -1,0 +1,49 @@
+/* Only what Invidious's default.css does not already provide. */
+
+.sidecar-filters {
+    margin-top: 0.5em;
+}
+
+.sidecar-filters select {
+    margin-right: 0.5em;
+}
+
+.sidecar-actions .pure-button {
+    padding: 0.2em 0.45em;
+    margin-right: 0.25em;
+    line-height: 1;
+}
+
+.sidecar-actions .sidecar-error {
+    font-size: 0.85em;
+    color: #d33;
+}
+
+.sidecar-removed {
+    display: none;
+}
+
+.sidecar-done {
+    opacity: 0.45;
+}
+
+.sidecar-score .video-data {
+    font-variant-numeric: tabular-nums;
+    cursor: help;
+}
+
+.sidecar-table {
+    width: 100%;
+}
+
+.sidecar-channel {
+    border: 1px solid rgba(128, 128, 128, 0.25);
+    border-radius: 4px;
+}
+
+.sidecar-channel h4 {
+    margin-top: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}

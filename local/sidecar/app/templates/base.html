@@ -1,0 +1,90 @@
+{%- set referer = request.url.path -%}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/css/pure-min.css">
+    <link rel="stylesheet" href="/css/grids-responsive-min.css">
+    <link rel="stylesheet" href="/css/ionicons.min.css">
+    <link rel="stylesheet" href="/css/default.css">
+    <link rel="stylesheet" href="/x/static/app.css">
+    <title>{% block title %}{{ active }} - Invidious{% endblock %}</title>
+</head>
+
+<body class="{{ body_class }}-theme">
+    <span style="display:none" id="dark_mode_pref">{{ dark_mode }}</span>
+    <div class="pure-g">
+        <div class="pure-u-1 pure-u-xl-20-24" id="contents">
+            <div class="pure-g navbar h-box">
+                <div class="pure-u-1 pure-u-md-4-24">
+                    <a href="/" class="index-link pure-menu-heading">Invidious</a>
+                </div>
+                <div class="pure-u-1 pure-u-md-12-24 searchbar">
+                    <form class="pure-form" action="/search" method="get">
+                        <div class="pure-control-group standalone">
+                            <input type="search" name="q" placeholder="Search" aria-label="Search"
+                                   value="" autocomplete="off" class="pure-input-1">
+                        </div>
+                    </form>
+                </div>
+                <div class="pure-u-1 pure-u-md-8-24 user-field">
+                    <div class="pure-u-1-4">
+                        <a id="toggle_theme" href="/toggle_theme?referer={{ referer }}"
+                           class="pure-menu-heading" title="Toggle theme">
+                            <i class="icon {% if dark_mode == 'dark' %}ion-ios-sunny{% else %}ion-ios-moon{% endif %}"></i>
+                        </a>
+                    </div>
+                    <div class="pure-u-1-4">
+                        <a title="Subscriptions" href="/feed/subscriptions" class="pure-menu-heading">
+                            <i class="icon ion-ios-notifications-outline"></i>
+                        </a>
+                    </div>
+                    <div class="pure-u-1-4">
+                        <a title="Preferences" href="/preferences?referer={{ referer }}" class="pure-menu-heading">
+                            <i class="icon ion-ios-cog"></i>
+                        </a>
+                    </div>
+                    <div class="pure-u-1-4">
+                        <a title="History" href="/feed/history" class="pure-menu-heading">
+                            <i class="icon ion-ios-time"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pure-g">
+                <div class="pure-u-1 pure-u-md-17-24">
+                    <nav class="pure-menu pure-menu-horizontal pure-menu-scrollable subheader">
+                        <ul class="pure-menu-list pure-menu">
+                            <li class="pure-menu-item pure-menu-has-children">
+                                <div class="feed-menu">
+                                    {%- for label, href in feed_menu -%}
+                                    <a href="{{ href }}"
+                                       class="feed-menu-item pure-menu-heading{% if active == label %} selected{% endif %}">{{ label }}</a>
+                                    {%- endfor -%}
+                                </div>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+
+            {% block content %}{% endblock %}
+
+            <footer>
+                <div class="pure-g">
+                    <div class="pure-u-1 pure-u-md-1-3">
+                        <span><i class="icon ion-logo-github"></i></span>
+                        <a href="https://github.com/iv-org/invidious">Invidious</a>
+                        &nbsp;/&nbsp; local sidecar
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+    <script src="/x/static/app.js"></script>
+</body>
+
+</html>
