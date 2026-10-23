@@ -42,7 +42,7 @@ docker compose up -d --build
 tailscale serve --bg --https=8444 http://127.0.0.1:3080
 ```
 
-Open `https://steve-mint.tail9d4465.ts.net:8444`, register, import
+Open `https://steve-server.tail9d4465.ts.net:8444`, register, import
 subscriptions (Settings → Import/export), turn watch history on in preferences.
 
 Then close registration and hand the sidecar a token:

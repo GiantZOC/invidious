@@ -1,6 +1,6 @@
 name: invidious-local
 
-# Invidious stack for steve-mint, reachable over the tailnet only.
+# Invidious stack for steve-server, reachable over the tailnet only.
 # Caddy is the only container publishing a host port, bound to 127.0.0.1:3080,
 # so nothing here is reachable from the LAN or the public internet.
 
