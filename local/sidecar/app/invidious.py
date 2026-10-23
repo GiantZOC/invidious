@@ -44,9 +44,15 @@ class InvidiousClient:
         await self._http.aclose()
 
     def _headers(self) -> dict[str, str]:
-        if self.token:
+        # INVIDIOUS_TOKEN is either a /token_manager API token, which is JSON
+        # (sometimes URL-encoded) and goes in Authorization: Bearer, or the
+        # SID cookie of a logged-in browser session, which Invidious only
+        # accepts as a cookie: sent as Bearer it answers 403.
+        if not self.token:
+            return {}
+        if self.token.startswith(("{", "%7B", "%7b")):
             return {"Authorization": f"Bearer {self.token}"}
-        return {}
+        return {"Cookie": f"SID={self.token}"}
 
     async def _get(self, path: str, params: dict[str, Any] | None = None) -> Any:
         async with self._gate:

@@ -62,6 +62,27 @@ def client(token="tok"):
 
 
 # ---------------------------------------------------------------------------
+# Auth headers
+# ---------------------------------------------------------------------------
+
+
+def test_session_id_is_sent_as_the_sid_cookie():
+    sid = "a" * 43 + "="
+    assert client(sid)._headers() == {"Cookie": f"SID={sid}"}
+
+
+def test_api_token_is_sent_as_bearer():
+    raw = '{"session":"v1:x","expire":1,"scopes":[":*"],"signature":"s"}'
+    assert client(raw)._headers() == {"Authorization": f"Bearer {raw}"}
+    encoded = "%7B%22session%22%3A%22v1%3Ax%22%7D"
+    assert client(encoded)._headers() == {"Authorization": f"Bearer {encoded}"}
+
+
+def test_no_token_sends_no_auth():
+    assert client("")._headers() == {}
+
+
+# ---------------------------------------------------------------------------
 # Parsing
 # ---------------------------------------------------------------------------
 

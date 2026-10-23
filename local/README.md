@@ -48,10 +48,16 @@ subscriptions (Settings → Import/export), turn watch history on in preferences
 Then close registration and hand the sidecar a token:
 
 1. Set `REGISTRATION_ENABLED=false` in `.env`, `docker compose up -d invidious`.
-2. Visit `/token_manager`, create a token with scopes
-   **feed, subscriptions, history, preferences**, and put it in `.env` as
-   `INVIDIOUS_TOKEN=`.
-3. `docker compose up -d sidecar` — the collector starts on boot.
+2. Put your login in `.env` as `INVIDIOUS_TOKEN=`. Either kind works:
+   - the `SID` cookie of your logged-in browser session (browser dev tools →
+     Storage/Application → Cookies → `SID`). The sidecar sends it as a cookie.
+     It stays valid until you log out of that session.
+   - an API token from `/token_manager` with scopes
+     **feed, subscriptions, history, preferences** (a JSON string). The sidecar
+     sends it as `Authorization: Bearer`.
+3. `docker compose up -d sidecar` — the collector starts on boot. A container
+   keeps the environment it was created with, so after editing `.env` run
+   `up -d sidecar` again; a plain restart keeps the old token.
 
 `https://…/x/health` reports the last poll time and row counts.
 
